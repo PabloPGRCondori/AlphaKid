@@ -92,7 +92,7 @@ fun CrearNotificacionScreen(
                     }
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = accentColor),
-                modifier = Modifier.align(Alignment.End)
+                modifier = Modifier.align(Alignment.CenterHorizontally)
             ) {
                 Icon(Icons.Default.Check, contentDescription = "Crear", tint = Color.White)
                 Spacer(modifier = Modifier.width(8.dp))
