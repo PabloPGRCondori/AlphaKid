@@ -43,19 +43,17 @@ fun CrearNotificacionScreen(
                     containerColor = primaryColor
                 )
             )
-        }
+        },
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(16.dp)
-                .background(backgroundColor),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+                .background(backgroundColor)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Icon(Icons.Default.Notifications, contentDescription = "Notificación", tint = primaryColor, modifier = Modifier.size(64.dp))
-            Spacer(modifier = Modifier.height(16.dp))
             OutlinedTextField(
                 value = newNotificacionTitle,
                 onValueChange = { newNotificacionTitle = it },
@@ -87,8 +85,14 @@ fun CrearNotificacionScreen(
             )
             Spacer(modifier = Modifier.height(16.dp))
             Button(
-                onClick = { onCreateNotificacion(newNotificacionTitle, newNotificacionDescription) },
-                colors = ButtonDefaults.buttonColors(containerColor = accentColor)
+                onClick = {
+                    if (newNotificacionTitle.isNotEmpty() && newNotificacionDescription.isNotEmpty()) {
+                        onCreateNotificacion(newNotificacionTitle, newNotificacionDescription)
+                        navController.popBackStack("lista_notificaciones", inclusive = false)
+                    }
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = accentColor),
+                modifier = Modifier.align(Alignment.CenterHorizontally)
             ) {
                 Icon(Icons.Default.Check, contentDescription = "Crear", tint = Color.White)
                 Spacer(modifier = Modifier.width(8.dp))
