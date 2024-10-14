@@ -23,7 +23,7 @@ fun EditarNotificacionScreen(
     onUpdateNotificacion: (Int, Pair<String, String>) -> Unit
 ) {
     var titulo by remember { mutableStateOf(notificacionActual.first) }
-    var descripcion by remember { mutableStateOf(notificacionActual.second) }
+    var descripcion by remember { mutableStateOf(notificacionActual.second  ) }
 
     val primaryColor = Color(0xFF739491)
     val secondaryColor = Color(0xFF4D88B3)
