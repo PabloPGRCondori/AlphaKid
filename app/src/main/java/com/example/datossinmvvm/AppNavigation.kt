@@ -17,8 +17,6 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.datossinmvvm.CrearNotificacionScreen
 import com.example.datossinmvvm.EditarNotificacionScreen
-import com.example.datossinmvvm.LoginScreen
-import com.example.datossinmvvm.MainScreen
 import com.example.datossinmvvm.PersonalizarAlertasCRUDScreen
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -34,12 +32,6 @@ fun AppNavigation() {
     val tertiaryColor = Color(0xFF314673)
     val backgroundColor = Color(0xFFE3E6D8)
     val accentColor = Color(0xFF7DB0D6)
-
-    NavHost(navController = navController, startDestination = "login") {
-        composable("login") { LoginScreen(navController) }
-        composable("main") { MainScreen(navController) }
-        // Add other composable destinations here
-}
 
     Scaffold(
         topBar = {
