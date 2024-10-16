@@ -29,6 +29,11 @@ fun RewardScreen(navController: NavController, rewards: List<Reward>) {
                     Text(reward.title, style = MaterialTheme.typography.headlineLarge)
                     Text(reward.description, style = MaterialTheme.typography.bodyMedium)
                     Text("Puntos: ${reward.points}", style = MaterialTheme.typography.bodyLarge)
+                    if (reward.isUnlocked) {
+                        Text("Desbloqueado", color = MaterialTheme.colorScheme.primary)
+                    } else {
+                        Text("Bloqueado", color = MaterialTheme.colorScheme.error)
+                    }
                 }
             }
         }
@@ -40,8 +45,8 @@ fun RewardScreen(navController: NavController, rewards: List<Reward>) {
 fun PreviewRewardScreen() {
     val navController = rememberNavController()
     val sampleRewards = listOf(
-        Reward(id = "1", title = "Recompensa 1", description = "Descripción de la recompensa 1", points = 100),
-        Reward(id = "2", title = "Recompensa 2", description = "Descripción de la recompensa 2", points = 200)
+        Reward(id = "1", title = "Recompensa 1", description = "Descripción de la recompensa 1", points = 100, isUnlocked = true),
+        Reward(id = "2", title = "Recompensa 2", description = "Descripción de la recompensa 2", points = 200, isUnlocked = false)
     )
     RewardScreen(navController, sampleRewards)
 }
