@@ -28,6 +28,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.datossinmvvm.CrearNotificacionScreen
 import com.example.datossinmvvm.EditarNotificacionScreen
+import com.example.datossinmvvm.HomeScreen
 import com.example.datossinmvvm.RewardRepository
 import com.example.datossinmvvm.RewardScreen
 
@@ -120,12 +121,12 @@ fun CrearNotificacionScreen(
 fun AppNavigation() {
     val navController = rememberNavController()
     NavHost(navController, startDestination = "home") {
-        composable("home") { /* Pantalla principal */ }
+        composable("home") { HomeScreen(navController) }
         composable("rewards") { RewardScreen(navController, RewardRepository.getRewards()) }
-
-        @Composable
-        fun AppNavigation() {
-            TODO("Not yet implemented")
-        }
+        composable("crear_notificacion") { CrearNotificacionScreen(navController, ::onCreateNotificacion) }
     }
+}
+
+fun onCreateNotificacion(title: String, description: String) {
+    // Lógica para crear una notificación
 }
