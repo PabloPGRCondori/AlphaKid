@@ -127,6 +127,20 @@ fun AppNavigation() {
     }
 }
 
+fun onSomeUserAction() {
+    // Lógica para la acción del usuario
+    onUserActionCompleted("action1")
+}
+
 fun onCreateNotificacion(title: String, description: String) {
     // Lógica para crear una notificación
+}
+
+fun onUserActionCompleted(actionId: String) {
+    // Lógica para determinar qué recompensa desbloquear
+    when (actionId) {
+        "action1" -> RewardRepository.unlockReward("1")
+        "action2" -> RewardRepository.unlockReward("2")
+        // Agrega más acciones y recompensas según sea necesario
+    }
 }

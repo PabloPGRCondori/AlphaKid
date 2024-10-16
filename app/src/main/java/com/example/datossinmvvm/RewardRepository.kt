@@ -3,22 +3,14 @@ package com.example.datossinmvvm
 import androidx.compose.runtime.mutableStateListOf
 
 object RewardRepository {
-    private val rewards = mutableStateListOf<Reward>()
+    private val rewards = mutableStateListOf<Reward>(
+        Reward(id = "1", title = "Recompensa 1", description = "Descripción de la recompensa 1", points = 100),
+        Reward(id = "2", title = "Recompensa 2", description = "Descripción de la recompensa 2", points = 200)
+    )
 
     fun getRewards(): List<Reward> = rewards
 
-    fun addReward(reward: Reward) {
-        rewards.add(reward)
-    }
-
-    fun removeReward(reward: Reward) {
-        rewards.remove(reward)
-    }
-
-    fun updateReward(updatedReward: Reward) {
-        val index = rewards.indexOfFirst { it.id == updatedReward.id }
-        if (index != -1) {
-            rewards[index] = updatedReward
-        }
+    fun unlockReward(id: String) {
+        rewards.find { it.id == id }?.isUnlocked = true
     }
 }
