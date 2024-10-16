@@ -28,6 +28,8 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.datossinmvvm.CrearNotificacionScreen
 import com.example.datossinmvvm.EditarNotificacionScreen
+import com.example.datossinmvvm.RewardRepository
+import com.example.datossinmvvm.RewardScreen
 
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
@@ -113,13 +115,17 @@ fun CrearNotificacionScreen(
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
-@Preview(showBackground = true)
-@Composable
-fun AppNavigationPreview() {
-    AppNavigation()
-}
-
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppNavigation() {
-    TODO("Not yet implemented")
+    val navController = rememberNavController()
+    NavHost(navController, startDestination = "home") {
+        composable("home") { /* Pantalla principal */ }
+        composable("rewards") { RewardScreen(navController, RewardRepository.getRewards()) }
+
+        @Composable
+        fun AppNavigation() {
+            TODO("Not yet implemented")
+        }
+    }
 }
