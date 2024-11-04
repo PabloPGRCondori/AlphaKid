@@ -1,0 +1,39 @@
+<layout xmlns:android="http://schemas.android.com/apk/res/android">
+    <data>
+        <variable
+            name="viewModel"
+            type="com.example.alphakid.ViewModel.PalabraViewModel" />
+    </data>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/palabraText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Palabra a adivinar" />
+
+        <EditText
+            android:id="@+id/inputPalabra"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:hint="Ingresa una palabra"
+            android:padding="12dp"
+            android:textSize="16sp" />
+
+        <Button
+            android:id="@+id/validarButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Validar" />
+
+        <Button
+            android:id="@+id/siguienteButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Siguiente" />
+    </LinearLayout>
+</layout>
