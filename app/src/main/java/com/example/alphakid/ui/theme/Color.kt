@@ -1,4 +1,4 @@
-package com.example.datossinmvvm.ui.theme
+package com.example.alphakid.ui.theme
 
 import androidx.compose.ui.graphics.Color
 

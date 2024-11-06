@@ -1,4 +1,4 @@
-package com.example.datossinmvvm
+package com.example.alphakid
 
 import org.junit.Test
 

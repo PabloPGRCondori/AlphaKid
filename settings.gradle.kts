@@ -19,6 +19,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "DatosSinMVVM"
+rootProject.name = "Alphakid"
 include(":app")
- 
