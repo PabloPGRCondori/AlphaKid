@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "com.example.alphakid"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.example.alphakid"
@@ -59,4 +59,6 @@ dependencies {
     // AWS SDK dependencies
     implementation("com.amazonaws:aws-android-sdk-core:2.22.0")
     implementation("com.amazonaws:aws-android-sdk-rekognition:2.22.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4")
 }
