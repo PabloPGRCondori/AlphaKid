@@ -38,7 +38,7 @@ class MainActivity : ComponentActivity() {
 
     private var detectedText by mutableStateOf("")
     private var challengeText by mutableStateOf("")
-
+//Add design for the app
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
