@@ -16,7 +16,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -33,12 +32,18 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
+import kotlin.random.Random
 
 class MainActivity : ComponentActivity() {
 
+    private val apiService: ApiService by lazy {
+        RetrofitInstance.retrofit.create(ApiService::class.java)
+    }
+
     private var detectedText by mutableStateOf("")
     private var challengeText by mutableStateOf("")
-//Add design for the app
+    private var randomPalabra by mutableStateOf<Palabra?>(null)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -79,8 +84,14 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun startChallenge() {
-        challengeText = "Form the letter A"
-        startCameraForScan()
+        CoroutineScope(Dispatchers.IO).launch {
+            val palabras = apiService.getPalabras()
+            if (palabras.isNotEmpty()) {
+                randomPalabra = palabras[Random.nextInt(palabras.size)]
+                challengeText = "Form the word ${randomPalabra?.palabra}"
+                startCameraForScan()
+            }
+        }
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
@@ -106,7 +117,7 @@ class MainActivity : ComponentActivity() {
 
     private fun processImage(bitmap: Bitmap) {
         CoroutineScope(Dispatchers.IO).launch {
-            // Replace YOUR_ACCESS_KEY and YOUR_SECRET_KEY with your AWS credentials
+            // Replace YOUR_ACCESS_KEY and YOUR_SECRET_KEY with AWS credentials
             val credentials = BasicAWSCredentials("-", "-")
             val rekognitionClient = AmazonRekognitionClient(credentials)
             rekognitionClient.setRegion(Region.getRegion(Regions.US_EAST_1))
@@ -123,8 +134,8 @@ class MainActivity : ComponentActivity() {
             this@MainActivity.detectedText = detectedText
 
             if (challengeText.isNotEmpty()) {
-                if (detectedText.equals("SOL", ignoreCase = true)) {
-                    this@MainActivity.challengeText = "Congratulations! You formed the letter A correctly."
+                if (detectedText.equals(randomPalabra?.palabra, ignoreCase = true)) {
+                    this@MainActivity.challengeText = "Congratulations! You formed the word ${randomPalabra?.palabra} correctly."
                 } else {
                     this@MainActivity.challengeText = "Incorrect or poorly focused. Try again."
                 }
@@ -144,12 +155,4 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
         text = "Detected text: $name",
         modifier = modifier
     )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    AlphakidTheme {
-        Greeting("Android")
-    }
 }
