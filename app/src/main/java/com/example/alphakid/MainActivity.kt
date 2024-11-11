@@ -33,11 +33,31 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
+import android.media.MediaPlayer
+
 
 class MainActivity : ComponentActivity() {
 
     private var detectedText by mutableStateOf("")
     private var challengeText by mutableStateOf("")
+    private var points by mutableStateOf(0)
+    private var currentWordIndex by mutableStateOf(0)
+    private val words = listOf("BALSA", "TECLA", "BARCO", "PELOTA", "COSTAL", "CALDERA", "BOLSA", "TAPETE", "RELOJ", "DORADO")
+    private val wordPoints = mapOf(
+        "BALSA" to 5,
+        "TECLA" to 10,
+        "BARCO" to 15,
+        "PELOTA" to 20,
+        "COSTAL" to 25,
+        "CALDERA" to 30,
+        "BOLSA" to 35,
+        "TAPETE" to 40,
+        "RELOJ" to 45,
+        "DORADO" to 50
+    )
+    private lateinit var correctSound: MediaPlayer
+    private lateinit var incorrectSound: MediaPlayer
+    private lateinit var backgroundMusic: MediaPlayer
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -62,10 +82,25 @@ class MainActivity : ComponentActivity() {
                         }
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(text = challengeText)
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(text = "Points: $points")
+                        Spacer(modifier = Modifier.height(16.dp))
+                        if (challengeText.isNotEmpty()) {
+                            Button(onClick = { continueChallenge() }) {
+                                Text(text = "Continue")
+                            }
+                        }
                     }
                 }
             }
         }
+
+        // Initialize MediaPlayer for sounds
+        correctSound = MediaPlayer.create(this, R.raw.correcto)
+        incorrectSound = MediaPlayer.create(this, R.raw.incorrecto)
+        backgroundMusic = MediaPlayer.create(this, R.raw.background_music)
+        backgroundMusic.isLooping = true
+        backgroundMusic.start()
 
         // Check for camera permission
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
@@ -79,8 +114,20 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun startChallenge() {
-        challengeText = "Form the letter A"
+        currentWordIndex = 0
+        points = 0
+        challengeText = words[currentWordIndex]
         startCameraForScan()
+    }
+
+    private fun continueChallenge() {
+        if (currentWordIndex < words.size - 1) {
+            currentWordIndex++
+            challengeText = words[currentWordIndex]
+            startCameraForScan()
+        } else {
+            challengeText = "Congratulations! You completed the challenge with $points points."
+        }
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
@@ -122,9 +169,11 @@ class MainActivity : ComponentActivity() {
             val detectedText = result.textDetections.firstOrNull()?.detectedText ?: "No text detected"
             this@MainActivity.detectedText = detectedText
 
-            if (challengeText.isNotEmpty()) {
-                if (detectedText.equals("SOL", ignoreCase = true)) {
-                    this@MainActivity.challengeText = "Congratulations! You formed the letter A correctly."
+            if (challengeText.isNotEmpty() && currentWordIndex < words.size) {
+                if (detectedText.equals(challengeText, ignoreCase = true)) {
+                    val pointsEarned = wordPoints[challengeText] ?: 0
+                    this@MainActivity.points += pointsEarned
+                    this@MainActivity.challengeText = "Correct! You earned $pointsEarned points."
                 } else {
                     this@MainActivity.challengeText = "Incorrect or poorly focused. Try again."
                 }
