@@ -1,6 +1,8 @@
 package com.example.alphakid
 
 data class Palabra(
-    val palabra: String,
-    val audio: String
+    val id: Int,
+    val nombre: String,
+    val imagen: String,
+    val puntos: Int
 )

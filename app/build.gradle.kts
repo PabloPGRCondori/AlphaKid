@@ -56,6 +56,9 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 
+    // Navigation Compose dependencies
+    implementation("androidx.navigation:navigation-compose:2.4.0-alpha10")
+
     // AWS SDK dependencies
     implementation("com.amazonaws:aws-android-sdk-core:2.22.0")
     implementation("com.amazonaws:aws-android-sdk-rekognition:2.22.0")
@@ -66,4 +69,7 @@ dependencies {
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.9.1")
+
+    // Coil dependencies
+    implementation("io.coil-kt:coil-compose:2.1.0")
 }
