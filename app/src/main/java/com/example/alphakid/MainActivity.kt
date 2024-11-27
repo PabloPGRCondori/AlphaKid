@@ -6,17 +6,21 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.os.Bundle
+import android.os.CountDownTimer
 import android.provider.MediaStore
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.Button
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -28,42 +32,40 @@ import com.amazonaws.services.rekognition.model.DetectTextRequest
 import com.amazonaws.services.rekognition.model.DetectTextResult
 import com.amazonaws.services.rekognition.model.Image
 import com.example.alphakid.ui.theme.AlphakidTheme
+import com.example.alphakid.ui.theme.accentColor
+import com.example.alphakid.ui.theme.backgroundColor
+import com.example.alphakid.ui.theme.primaryColor
+import com.example.alphakid.ui.theme.secondaryColor
+import com.example.alphakid.ui.theme.tertiaryColor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
-import android.media.MediaPlayer
-
+import kotlin.random.Random
 
 class MainActivity : ComponentActivity() {
 
+    private val apiService: ApiService by lazy {
+        RetrofitInstance.retrofit.create(ApiService::class.java)
+    }
+
     private var detectedText by mutableStateOf("")
     private var challengeText by mutableStateOf("")
-    private var points by mutableStateOf(0)
-    private var currentWordIndex by mutableStateOf(0)
-    private val words = listOf("BALSA", "TECLA", "BARCO", "PELOTA", "COSTAL", "CALDERA", "BOLSA", "TAPETE", "RELOJ", "DORADO")
-    private val wordPoints = mapOf(
-        "BALSA" to 5,
-        "TECLA" to 10,
-        "BARCO" to 15,
-        "PELOTA" to 20,
-        "COSTAL" to 25,
-        "CALDERA" to 30,
-        "BOLSA" to 35,
-        "TAPETE" to 40,
-        "RELOJ" to 45,
-        "DORADO" to 50
-    )
-    private lateinit var correctSound: MediaPlayer
-    private lateinit var incorrectSound: MediaPlayer
-    private lateinit var backgroundMusic: MediaPlayer
+    private var randomPalabra by mutableStateOf<Palabra?>(null)
+    private var wordCount by mutableStateOf(0)
+    private var showContinueButton by mutableStateOf(false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             AlphakidTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+                Scaffold(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(backgroundColor)
+                ) { innerPadding ->
                     Column(
                         modifier = Modifier
                             .padding(innerPadding)
@@ -71,36 +73,52 @@ class MainActivity : ComponentActivity() {
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center
                     ) {
-                        Greeting(name = detectedText)
+                        Image(
+                            painter = painterResource(id = R.drawable.principal_icon), // Add a logo image
+                            contentDescription = "App Logo",
+                            modifier = Modifier
+                                .size(150.dp)
+                                .clip(RoundedCornerShape(75.dp))
+                        )
                         Spacer(modifier = Modifier.height(16.dp))
-                        Button(onClick = { startCameraForScan() }) {
-                            Text(text = "Scan Text")
+                        Text(
+                            text = "Detected text: $detectedText",
+                            style = MaterialTheme.typography.headlineMedium,
+                            color = tertiaryColor
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Button(
+                            onClick = { startCameraForScan() },
+                            colors = ButtonDefaults.buttonColors(containerColor = primaryColor)
+                        ) {
+                            Text(text = "Scan Text", color = Color.White)
                         }
                         Spacer(modifier = Modifier.height(16.dp))
-                        Button(onClick = { startChallenge() }) {
-                            Text(text = "Start Challenge")
-                        }
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(text = challengeText)
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(text = "Points: $points")
-                        Spacer(modifier = Modifier.height(16.dp))
-                        if (challengeText.isNotEmpty()) {
-                            Button(onClick = { continueChallenge() }) {
-                                Text(text = "Continue")
+                        if (showContinueButton) {
+                            Button(
+                                onClick = { startChallenge() },
+                                colors = ButtonDefaults.buttonColors(containerColor = secondaryColor)
+                            ) {
+                                Text(text = "Continue Challenge", color = Color.White)
+                            }
+                        } else {
+                            Button(
+                                onClick = { startChallenge() },
+                                colors = ButtonDefaults.buttonColors(containerColor = secondaryColor)
+                            ) {
+                                Text(text = "Start Challenge", color = Color.White)
                             }
                         }
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = challengeText,
+                            style = MaterialTheme.typography.headlineMedium,
+                            color = accentColor
+                        )
                     }
                 }
             }
         }
-
-        // Initialize MediaPlayer for sounds
-        correctSound = MediaPlayer.create(this, R.raw.correcto)
-        incorrectSound = MediaPlayer.create(this, R.raw.incorrecto)
-        backgroundMusic = MediaPlayer.create(this, R.raw.background_music)
-        backgroundMusic.isLooping = true
-        backgroundMusic.start()
 
         // Check for camera permission
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
@@ -110,24 +128,43 @@ class MainActivity : ComponentActivity() {
 
     private fun startCameraForScan() {
         val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-        startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE)
+        if (takePictureIntent.resolveActivity(packageManager) != null) {
+            startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE)
+        }
     }
 
     private fun startChallenge() {
-        currentWordIndex = 0
-        points = 0
-        challengeText = words[currentWordIndex]
-        startCameraForScan()
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val palabras = apiService.getPalabras()
+                if (palabras.isNotEmpty()) {
+                    randomPalabra = palabras[Random.nextInt(palabras.size)]
+                    withContext(Dispatchers.Main) {
+                        challengeText = "Form the word ${randomPalabra?.palabra}"
+                        showContinueButton = false
+                        startTimer()
+                    }
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    println("Error fetching words: ${e.message}")
+                }
+            }
+        }
     }
 
-    private fun continueChallenge() {
-        if (currentWordIndex < words.size - 1) {
-            currentWordIndex++
-            challengeText = words[currentWordIndex]
-            startCameraForScan()
-        } else {
-            challengeText = "Congratulations! You completed the challenge with $points points."
-        }
+    private fun startTimer() {
+        object : CountDownTimer(5000, 1000) {
+            override fun onTick(millisUntilFinished: Long) {
+                challengeText = "Form the word ${randomPalabra?.palabra} in ${millisUntilFinished / 1000} seconds"
+            }
+
+            override fun onFinish() {
+                showContinueButton = true
+                challengeText = "Time's up! Form the word ${randomPalabra?.palabra}"
+                startCameraForScan()
+            }
+        }.start()
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
@@ -146,37 +183,50 @@ class MainActivity : ComponentActivity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == Activity.RESULT_OK) {
-            val imageBitmap = data?.extras?.get("data") as Bitmap
-            processImage(imageBitmap)
+            val imageBitmap = data?.extras?.get("data") as? Bitmap
+            if (imageBitmap != null) {
+                processImage(imageBitmap)
+            } else {
+                println("Error: Image capture failed")
+            }
         }
     }
 
     private fun processImage(bitmap: Bitmap) {
         CoroutineScope(Dispatchers.IO).launch {
-            // Replace YOUR_ACCESS_KEY and YOUR_SECRET_KEY with your AWS credentials
-            val credentials = BasicAWSCredentials("-", "-")
-            val rekognitionClient = AmazonRekognitionClient(credentials)
-            rekognitionClient.setRegion(Region.getRegion(Regions.US_EAST_1))
+            try {
+                val credentials = BasicAWSCredentials("-", "-")
+                val rekognitionClient = AmazonRekognitionClient(credentials)
+                rekognitionClient.setRegion(Region.getRegion(Regions.US_EAST_1))
 
-            val stream = ByteArrayOutputStream()
-            bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
-            val imageBytes = ByteBuffer.wrap(stream.toByteArray())
-            val image = Image().withBytes(imageBytes)
+                val stream = ByteArrayOutputStream()
+                bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
+                val imageBytes = ByteBuffer.wrap(stream.toByteArray())
+                val image = Image().withBytes(imageBytes)
 
-            val request = DetectTextRequest().withImage(image)
-            val result: DetectTextResult = rekognitionClient.detectText(request)
+                val request = DetectTextRequest().withImage(image)
+                val result: DetectTextResult = rekognitionClient.detectText(request)
 
-            val detectedText = result.textDetections.firstOrNull()?.detectedText ?: "No text detected"
-            this@MainActivity.detectedText = detectedText
+                val detectedText = result.textDetections.firstOrNull()?.detectedText ?: "No text detected"
+                withContext(Dispatchers.Main) {
+                    this@MainActivity.detectedText = detectedText
 
-            if (challengeText.isNotEmpty() && currentWordIndex < words.size) {
-                if (detectedText.equals(challengeText, ignoreCase = true)) {
-                    val pointsEarned = wordPoints[challengeText] ?: 0
-                    this@MainActivity.points += pointsEarned
-                    this@MainActivity.challengeText = "Correct! You earned $pointsEarned points."
-                } else {
-                    this@MainActivity.challengeText = "Incorrect or poorly focused. Try again."
+                    if (challengeText.isNotEmpty()) {
+                        if (detectedText.equals(randomPalabra?.palabra, ignoreCase = true)) {
+                            wordCount++
+                            if (wordCount >= 10) {
+                                challengeText = "Congratulations! You have completed 10 words."
+                            } else {
+                                challengeText = "Congratulations! You formed the word ${randomPalabra?.palabra} correctly."
+                                showContinueButton = true
+                            }
+                        } else {
+                            challengeText = "Incorrect or poorly focused. Try again."
+                        }
+                    }
                 }
+            } catch (e: Exception) {
+                println("Error processing image: ${e.message}")
             }
         }
     }
@@ -184,21 +234,5 @@ class MainActivity : ComponentActivity() {
     companion object {
         const val REQUEST_IMAGE_CAPTURE = 1
         const val REQUEST_CAMERA_PERMISSION = 2
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Detected text: $name",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    AlphakidTheme {
-        Greeting("Android")
     }
 }
