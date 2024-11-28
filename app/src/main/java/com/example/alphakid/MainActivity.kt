@@ -1,6 +1,7 @@
 package com.example.alphakid
 
 import android.Manifest
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
@@ -10,21 +11,19 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
+import androidx.navigation.compose.*
 import com.amazonaws.auth.BasicAWSCredentials
 import com.amazonaws.regions.Region
 import com.amazonaws.regions.Regions
@@ -33,10 +32,6 @@ import com.amazonaws.services.rekognition.model.DetectTextRequest
 import com.amazonaws.services.rekognition.model.DetectTextResult
 import com.amazonaws.services.rekognition.model.Image
 import com.example.alphakid.ui.theme.AlphakidTheme
-import com.example.alphakid.ui.theme.accentColor
-import com.example.alphakid.ui.theme.primaryColor
-import com.example.alphakid.ui.theme.secondaryColor
-import com.example.alphakid.ui.theme.tertiaryColor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -88,9 +83,34 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     fun MainScreen(navController: NavHostController) {
+        val context = LocalContext.current
+        val sharedPreferences = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
+        val userName = sharedPreferences.getString("user_name", "Usuario Anónimo")
+        val profileImage = sharedPreferences.getInt("profile_image", -1)
+
         Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            if (profileImage != -1) {
+                                Image(
+                                    painter = painterResource(id = profileImage),
+                                    contentDescription = "Foto de perfil",
+                                    modifier = Modifier
+                                        .size(40.dp)
+                                        .clip(CircleShape)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                            }
+                            Text(text = "¡Bienvenido, $userName!")
+                        }
+                    }
+                )
+            },
             modifier = Modifier.fillMaxSize()
         ) { innerPadding ->
             Column(
@@ -100,40 +120,31 @@ class MainActivity : ComponentActivity() {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                Image(
-                    painter = painterResource(id = R.drawable.principal_icon), // Add a logo image
-                    contentDescription = "App Logo",
-                    modifier = Modifier
-                        .size(150.dp)
-                        .clip(RoundedCornerShape(75.dp))
-                )
-                Spacer(modifier = Modifier.height(16.dp))
                 Text(
                     text = "Texto detectado: $detectedText",
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = tertiaryColor
+                    style = MaterialTheme.typography.headlineMedium
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 Button(
                     onClick = { startCameraForScan() },
-                    colors = ButtonDefaults.buttonColors(containerColor = primaryColor)
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                 ) {
-                    Text(text = "Escanear Texto", color = Color.White)
+                    Text(text = "Escanear Texto", color = MaterialTheme.colorScheme.onPrimary)
                 }
                 Spacer(modifier = Modifier.height(16.dp))
                 if (showContinueButton) {
                     Button(
                         onClick = { startChallenge(navController) },
-                        colors = ButtonDefaults.buttonColors(containerColor = secondaryColor)
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
                     ) {
-                        Text(text = "Continuar Reto", color = Color.White)
+                        Text(text = "Continuar Reto", color = MaterialTheme.colorScheme.onSecondary)
                     }
                 } else {
                     Button(
                         onClick = { startChallenge(navController) },
-                        colors = ButtonDefaults.buttonColors(containerColor = secondaryColor)
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
                     ) {
-                        Text(text = "Iniciar Reto", color = Color.White)
+                        Text(text = "Iniciar Reto", color = MaterialTheme.colorScheme.onSecondary)
                     }
                 }
                 Spacer(modifier = Modifier.height(16.dp))
@@ -141,7 +152,7 @@ class MainActivity : ComponentActivity() {
                     Text(
                         text = "Última palabra del reto: $lastChallengeWord",
                         style = MaterialTheme.typography.bodyLarge,
-                        color = Color.Gray
+                        color = MaterialTheme.colorScheme.onBackground
                     )
                 }
             }
