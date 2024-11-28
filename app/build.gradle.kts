@@ -72,4 +72,7 @@ dependencies {
 
     // Coil dependencies
     implementation("io.coil-kt:coil-compose:2.1.0")
+
+    //lottieFile
+    implementation ("com.airbnb.android:lottie-compose:6.0.0")
 }
