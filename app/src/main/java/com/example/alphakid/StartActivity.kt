@@ -55,6 +55,7 @@ fun StartScreen() {
                 with(sharedPreferences.edit()) {
                     putString("user_name", name)
                     putInt("profile_image", randomImageId)
+                    putInt("user_points", 0) // Initialize points to 0
                     apply()
                 }
                 context.startActivity(Intent(context, MainActivity::class.java))

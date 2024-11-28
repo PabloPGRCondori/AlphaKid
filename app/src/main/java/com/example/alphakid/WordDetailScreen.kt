@@ -10,12 +10,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavHostController
 import coil.compose.rememberImagePainter
 
 @Composable
-fun WordDetailScreen(palabra: Palabra, onTakePhoto: () -> Unit) {
+fun WordDetailScreen(palabra: Palabra, navController: NavHostController, onTakePhoto: () -> Unit) {
     var timerText by remember { mutableStateOf("Form the word in 5 seconds") }
     var isProcessing by remember { mutableStateOf(false) }
+    var timerFinished by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         object : CountDownTimer(5000, 1000) {
@@ -25,6 +27,7 @@ fun WordDetailScreen(palabra: Palabra, onTakePhoto: () -> Unit) {
 
             override fun onFinish() {
                 timerText = "Time's up! Taking a photo to scan the word."
+                timerFinished = true
                 onTakePhoto()
             }
         }.start()
@@ -68,8 +71,16 @@ fun WordDetailScreen(palabra: Palabra, onTakePhoto: () -> Unit) {
                 color = Color.Gray
             )
         } else {
-            Button(onClick = onTakePhoto) {
-                Text(text = "Take Photo")
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Button(onClick = onTakePhoto) {
+                    Text(text = "Take Photo")
+                }
+                Button(onClick = { navController.navigate("main") }) {
+                    Text(text = "Salir del Reto")
+                }
             }
         }
     }

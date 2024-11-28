@@ -7,6 +7,7 @@ import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.os.Bundle
 import android.provider.MediaStore
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
@@ -50,9 +51,9 @@ class MainActivity : ComponentActivity() {
     private var challengeText by mutableStateOf("")
     private var randomPalabra by mutableStateOf<Palabra?>(null)
     private var wordCount by mutableStateOf(0)
-    private var showContinueButton by mutableStateOf(false)
     private var isProcessing by mutableStateOf(false)
     private var lastChallengeWord by mutableStateOf("")
+    private var points by mutableStateOf(0)
     private lateinit var navController: NavHostController
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -68,13 +69,17 @@ class MainActivity : ComponentActivity() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.CAMERA), REQUEST_CAMERA_PERMISSION)
         }
+
+        // Load points from SharedPreferences
+        val sharedPreferences = getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
+        points = sharedPreferences.getInt("user_points", 0)
     }
 
     @Composable
     fun AppNavHost(navController: NavHostController) {
         NavHost(navController = navController, startDestination = "main") {
             composable("main") { MainScreen(navController) }
-            composable("wordDetail") { randomPalabra?.let { WordDetailScreen(it) { startCameraForScan() } } }
+            composable("wordDetail") { randomPalabra?.let { WordDetailScreen(it, navController) { startCameraForScan() } } }
             composable("result") {
                 ResultScreen(navController, detectedText, challengeText, wordCount, randomPalabra) {
                     startChallenge(navController)
@@ -90,6 +95,7 @@ class MainActivity : ComponentActivity() {
         val sharedPreferences = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
         val userName = sharedPreferences.getString("user_name", "Usuario Anónimo")
         val profileImage = sharedPreferences.getInt("profile_image", -1)
+        val points = sharedPreferences.getInt("user_points", 0)
 
         Scaffold(
             topBar = {
@@ -106,7 +112,10 @@ class MainActivity : ComponentActivity() {
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
                             }
-                            Text(text = "¡Bienvenido, $userName!")
+                            Column {
+                                Text(text = "¡Bienvenido, $userName!")
+                                Text(text = "Puntos: $points")
+                            }
                         }
                     }
                 )
@@ -120,11 +129,6 @@ class MainActivity : ComponentActivity() {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                Text(
-                    text = "Texto detectado: $detectedText",
-                    style = MaterialTheme.typography.headlineMedium
-                )
-                Spacer(modifier = Modifier.height(16.dp))
                 Button(
                     onClick = { startCameraForScan() },
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
@@ -132,20 +136,11 @@ class MainActivity : ComponentActivity() {
                     Text(text = "Escanear Texto", color = MaterialTheme.colorScheme.onPrimary)
                 }
                 Spacer(modifier = Modifier.height(16.dp))
-                if (showContinueButton) {
-                    Button(
-                        onClick = { startChallenge(navController) },
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
-                    ) {
-                        Text(text = "Continuar Reto", color = MaterialTheme.colorScheme.onSecondary)
-                    }
-                } else {
-                    Button(
-                        onClick = { startChallenge(navController) },
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
-                    ) {
-                        Text(text = "Iniciar Reto", color = MaterialTheme.colorScheme.onSecondary)
-                    }
+                Button(
+                    onClick = { startChallenge(navController) },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
+                ) {
+                    Text(text = "Iniciar Reto", color = MaterialTheme.colorScheme.onSecondary)
                 }
                 Spacer(modifier = Modifier.height(16.dp))
                 if (lastChallengeWord.isNotEmpty()) {
@@ -231,11 +226,7 @@ class MainActivity : ComponentActivity() {
                 withContext(Dispatchers.Main) {
                     this@MainActivity.detectedText = detectedText
                     isProcessing = false
-
-                    if (challengeText.isNotEmpty()) {
-                        lastChallengeWord = challengeText
-                        navController.navigate("result")
-                    }
+                    navController.navigate("result") // Ensure navigation to result screen
                 }
             } catch (e: Exception) {
                 println("Error processing image: ${e.message}")
