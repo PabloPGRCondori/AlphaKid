@@ -1,13 +1,11 @@
 package com.example.alphakid
 
 import android.Manifest
-import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.os.Bundle
 import android.provider.MediaStore
-import android.os.CountDownTimer
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
@@ -27,7 +25,6 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import coil.compose.rememberImagePainter
 import com.amazonaws.auth.BasicAWSCredentials
 import com.amazonaws.regions.Region
 import com.amazonaws.regions.Regions
@@ -60,6 +57,7 @@ class MainActivity : ComponentActivity() {
     private var wordCount by mutableStateOf(0)
     private var showContinueButton by mutableStateOf(false)
     private var isProcessing by mutableStateOf(false)
+    private var lastChallengeWord by mutableStateOf("")
     private lateinit var navController: NavHostController
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -82,7 +80,11 @@ class MainActivity : ComponentActivity() {
         NavHost(navController = navController, startDestination = "main") {
             composable("main") { MainScreen(navController) }
             composable("wordDetail") { randomPalabra?.let { WordDetailScreen(it) { startCameraForScan() } } }
-            composable("result") { ResultScreen(detectedText, challengeText) }
+            composable("result") {
+                ResultScreen(navController, detectedText, challengeText, wordCount, randomPalabra) {
+                    startChallenge(navController)
+                }
+            }
         }
     }
 
@@ -107,7 +109,7 @@ class MainActivity : ComponentActivity() {
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = "Detected text: $detectedText",
+                    text = "Texto detectado: $detectedText",
                     style = MaterialTheme.typography.headlineMedium,
                     color = tertiaryColor
                 )
@@ -116,7 +118,7 @@ class MainActivity : ComponentActivity() {
                     onClick = { startCameraForScan() },
                     colors = ButtonDefaults.buttonColors(containerColor = primaryColor)
                 ) {
-                    Text(text = "Scan Text", color = Color.White)
+                    Text(text = "Escanear Texto", color = Color.White)
                 }
                 Spacer(modifier = Modifier.height(16.dp))
                 if (showContinueButton) {
@@ -124,22 +126,24 @@ class MainActivity : ComponentActivity() {
                         onClick = { startChallenge(navController) },
                         colors = ButtonDefaults.buttonColors(containerColor = secondaryColor)
                     ) {
-                        Text(text = "Continue Challenge", color = Color.White)
+                        Text(text = "Continuar Reto", color = Color.White)
                     }
                 } else {
                     Button(
                         onClick = { startChallenge(navController) },
                         colors = ButtonDefaults.buttonColors(containerColor = secondaryColor)
                     ) {
-                        Text(text = "Start Challenge", color = Color.White)
+                        Text(text = "Iniciar Reto", color = Color.White)
                     }
                 }
                 Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    text = challengeText,
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = accentColor
-                )
+                if (lastChallengeWord.isNotEmpty()) {
+                    Text(
+                        text = "Última palabra del reto: $lastChallengeWord",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = Color.Gray
+                    )
+                }
             }
         }
     }
@@ -157,6 +161,8 @@ class MainActivity : ComponentActivity() {
                 val palabras = apiService.getPalabras()
                 if (palabras.isNotEmpty()) {
                     randomPalabra = palabras[Random.nextInt(palabras.size)]
+                    challengeText = randomPalabra?.nombre ?: ""
+                    detectedText = ""
                     withContext(Dispatchers.Main) {
                         navController.navigate("wordDetail")
                     }
@@ -167,20 +173,6 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-    }
-
-    private fun startTimer() {
-        object : CountDownTimer(5000, 1000) {
-            override fun onTick(millisUntilFinished: Long) {
-                challengeText = "Form the word ${randomPalabra?.nombre} in ${millisUntilFinished / 1000} seconds"
-            }
-
-            override fun onFinish() {
-                showContinueButton = true
-                challengeText = "Time's up! Form the word ${randomPalabra?.nombre}"
-                startCameraForScan()
-            }
-        }.start()
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
@@ -202,17 +194,17 @@ class MainActivity : ComponentActivity() {
             val imageBitmap = data?.extras?.get("data") as? Bitmap
             if (imageBitmap != null) {
                 isProcessing = true
-                processImage(imageBitmap, navController)
+                processImage(imageBitmap)
             } else {
                 println("Error: Image capture failed")
             }
         }
     }
 
-    private fun processImage(bitmap: Bitmap, navController: NavHostController) {
+    private fun processImage(bitmap: Bitmap) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                val credentials = BasicAWSCredentials("-", "-")
+                val credentials = BasicAWSCredentials("-", "-") // Add your AWS credentials
                 val rekognitionClient = AmazonRekognitionClient(credentials)
                 rekognitionClient.setRegion(Region.getRegion(Regions.US_EAST_1))
 
@@ -230,20 +222,9 @@ class MainActivity : ComponentActivity() {
                     isProcessing = false
 
                     if (challengeText.isNotEmpty()) {
-                        if (detectedText.equals(randomPalabra?.nombre, ignoreCase = true)) {
-                            wordCount++
-                            if (wordCount >= 10) {
-                                challengeText = "Congratulations! You have completed 10 words."
-                            } else {
-                                challengeText = "Congratulations! You formed the word ${randomPalabra?.nombre} correctly."
-                                showContinueButton = true
-                            }
-                        } else {
-                            challengeText = "Incorrect or poorly focused. Try again."
-                        }
+                        lastChallengeWord = challengeText
+                        navController.navigate("result")
                     }
-                    // Navigate to result screen
-                    navController.navigate("result")
                 }
             } catch (e: Exception) {
                 println("Error processing image: ${e.message}")
