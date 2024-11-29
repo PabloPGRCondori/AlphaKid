@@ -1,30 +1,30 @@
 package com.example.alphakid
 
 import android.Manifest
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.os.Bundle
 import android.provider.MediaStore
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
+import androidx.navigation.compose.*
 import com.amazonaws.auth.BasicAWSCredentials
 import com.amazonaws.regions.Region
 import com.amazonaws.regions.Regions
@@ -33,10 +33,6 @@ import com.amazonaws.services.rekognition.model.DetectTextRequest
 import com.amazonaws.services.rekognition.model.DetectTextResult
 import com.amazonaws.services.rekognition.model.Image
 import com.example.alphakid.ui.theme.AlphakidTheme
-import com.example.alphakid.ui.theme.accentColor
-import com.example.alphakid.ui.theme.primaryColor
-import com.example.alphakid.ui.theme.secondaryColor
-import com.example.alphakid.ui.theme.tertiaryColor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -55,9 +51,9 @@ class MainActivity : ComponentActivity() {
     private var challengeText by mutableStateOf("")
     private var randomPalabra by mutableStateOf<Palabra?>(null)
     private var wordCount by mutableStateOf(0)
-    private var showContinueButton by mutableStateOf(false)
     private var isProcessing by mutableStateOf(false)
     private var lastChallengeWord by mutableStateOf("")
+    private var points by mutableStateOf(0)
     private lateinit var navController: NavHostController
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -73,13 +69,17 @@ class MainActivity : ComponentActivity() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.CAMERA), REQUEST_CAMERA_PERMISSION)
         }
+
+        // Load points from SharedPreferences
+        val sharedPreferences = getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
+        points = sharedPreferences.getInt("user_points", 0)
     }
 
     @Composable
     fun AppNavHost(navController: NavHostController) {
         NavHost(navController = navController, startDestination = "main") {
             composable("main") { MainScreen(navController) }
-            composable("wordDetail") { randomPalabra?.let { WordDetailScreen(it) { startCameraForScan() } } }
+            composable("wordDetail") { randomPalabra?.let { WordDetailScreen(it, navController) { startCameraForScan() } } }
             composable("result") {
                 ResultScreen(navController, detectedText, challengeText, wordCount, randomPalabra) {
                     startChallenge(navController)
@@ -88,9 +88,38 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     fun MainScreen(navController: NavHostController) {
+        val context = LocalContext.current
+        val sharedPreferences = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
+        val userName = sharedPreferences.getString("user_name", "Usuario Anónimo")
+        val profileImage = sharedPreferences.getInt("profile_image", -1)
+        val points = sharedPreferences.getInt("user_points", 0)
+
         Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            if (profileImage != -1) {
+                                Image(
+                                    painter = painterResource(id = profileImage),
+                                    contentDescription = "Foto de perfil",
+                                    modifier = Modifier
+                                        .size(40.dp)
+                                        .clip(CircleShape)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                            }
+                            Column {
+                                Text(text = "¡Bienvenido, $userName!")
+                                Text(text = "Puntos: $points")
+                            }
+                        }
+                    }
+                )
+            },
             modifier = Modifier.fillMaxSize()
         ) { innerPadding ->
             Column(
@@ -100,48 +129,25 @@ class MainActivity : ComponentActivity() {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                Image(
-                    painter = painterResource(id = R.drawable.principal_icon), // Add a logo image
-                    contentDescription = "App Logo",
-                    modifier = Modifier
-                        .size(150.dp)
-                        .clip(RoundedCornerShape(75.dp))
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    text = "Texto detectado: $detectedText",
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = tertiaryColor
-                )
-                Spacer(modifier = Modifier.height(16.dp))
                 Button(
                     onClick = { startCameraForScan() },
-                    colors = ButtonDefaults.buttonColors(containerColor = primaryColor)
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                 ) {
-                    Text(text = "Escanear Texto", color = Color.White)
+                    Text(text = "Escanear Texto", color = MaterialTheme.colorScheme.onPrimary)
                 }
                 Spacer(modifier = Modifier.height(16.dp))
-                if (showContinueButton) {
-                    Button(
-                        onClick = { startChallenge(navController) },
-                        colors = ButtonDefaults.buttonColors(containerColor = secondaryColor)
-                    ) {
-                        Text(text = "Continuar Reto", color = Color.White)
-                    }
-                } else {
-                    Button(
-                        onClick = { startChallenge(navController) },
-                        colors = ButtonDefaults.buttonColors(containerColor = secondaryColor)
-                    ) {
-                        Text(text = "Iniciar Reto", color = Color.White)
-                    }
+                Button(
+                    onClick = { startChallenge(navController) },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
+                ) {
+                    Text(text = "Iniciar Reto", color = MaterialTheme.colorScheme.onSecondary)
                 }
                 Spacer(modifier = Modifier.height(16.dp))
                 if (lastChallengeWord.isNotEmpty()) {
                     Text(
                         text = "Última palabra del reto: $lastChallengeWord",
                         style = MaterialTheme.typography.bodyLarge,
-                        color = Color.Gray
+                        color = MaterialTheme.colorScheme.onBackground
                     )
                 }
             }
@@ -220,11 +226,7 @@ class MainActivity : ComponentActivity() {
                 withContext(Dispatchers.Main) {
                     this@MainActivity.detectedText = detectedText
                     isProcessing = false
-
-                    if (challengeText.isNotEmpty()) {
-                        lastChallengeWord = challengeText
-                        navController.navigate("result")
-                    }
+                    navController.navigate("result") // Ensure navigation to result screen
                 }
             } catch (e: Exception) {
                 println("Error processing image: ${e.message}")

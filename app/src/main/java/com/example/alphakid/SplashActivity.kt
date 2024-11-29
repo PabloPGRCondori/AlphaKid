@@ -1,6 +1,7 @@
 package com.example.alphakid
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
@@ -33,9 +34,14 @@ class SplashActivity : ComponentActivity() {
             }
         }
 
-        // Navigate to MainActivity after 2 seconds
         Handler(Looper.getMainLooper()).postDelayed({
-            startActivity(Intent(this, MainActivity::class.java))
+            val sharedPreferences = getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
+            val userName = sharedPreferences.getString("user_name", null)
+            if (userName.isNullOrEmpty()) {
+                startActivity(Intent(this, StartActivity::class.java))
+            } else {
+                startActivity(Intent(this, MainActivity::class.java))
+            }
             finish()
         }, 2000)
     }
