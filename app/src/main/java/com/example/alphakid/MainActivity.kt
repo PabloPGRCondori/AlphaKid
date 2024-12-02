@@ -18,6 +18,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
@@ -40,6 +41,7 @@ import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
 import kotlin.random.Random
+import androidx.compose.material3.TopAppBarDefaults
 
 class MainActivity : ComponentActivity() {
 
@@ -113,11 +115,14 @@ class MainActivity : ComponentActivity() {
                                 Spacer(modifier = Modifier.width(8.dp))
                             }
                             Column {
-                                Text(text = "¡Bienvenido, $userName!")
-                                Text(text = "Puntos: $points")
+                                Text(text = "¡Bienvenido, $userName!", color = Color.White)
+                                Text(text = "Puntos: $points", color = Color.White)
                             }
                         }
-                    }
+                    },
+                    colors = TopAppBarDefaults.smallTopAppBarColors(
+                        containerColor = Color(0xFF314673)
+                    )
                 )
             },
             modifier = Modifier.fillMaxSize()
@@ -210,7 +215,7 @@ class MainActivity : ComponentActivity() {
     private fun processImage(bitmap: Bitmap) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                val credentials = BasicAWSCredentials("-", "-") 
+                val credentials = BasicAWSCredentials("-", "-") // Add your AWS credentials
                 val rekognitionClient = AmazonRekognitionClient(credentials)
                 rekognitionClient.setRegion(Region.getRegion(Regions.US_EAST_1))
 
