@@ -13,6 +13,9 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.outlined.CameraAlt
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -148,30 +151,51 @@ class MainActivity : ComponentActivity() {
                         .padding(top = 240.dp),
                     fontSize = 40.sp
                     )
+
                 Row(
                     modifier = Modifier
-                        .align(Alignment.BottomCenter) // Coloca el Row en la parte inferior central
-                        .padding(bottom = 240.dp), // Padding inferior
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 240.dp),
                     horizontalArrangement = Arrangement.SpaceBetween
-                )
-                {
-                    Button(
-                        onClick = { startCameraForScan() },
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-                    ) {
-                        Text(text = "Escanear Texto", color = MaterialTheme.colorScheme.onPrimary)
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Button(
+                            onClick = { startCameraForScan() },
+                            modifier = Modifier
+                                .size(width = 200.dp, height = 60.dp)
+                                .padding(8.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                        ) {
+                            Text(text = "Escanear", color = MaterialTheme.colorScheme.onPrimary, fontSize = 25.sp) // Text dentro del Button
+                        }
+                        Icon(
+                            imageVector = Icons.Outlined.CameraAlt, // Icono de cámara
+                            contentDescription = "Escanear",
+                            modifier = Modifier.size(32.dp),
+                            tint = Color.Black
+                        )
                     }
+
                     Spacer(modifier = Modifier.width(50.dp))
-                    Button(
-                        onClick = { startChallenge(navController) },
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
-                    ) {
-                        Text(text = "Iniciar Reto", color = MaterialTheme.colorScheme.onSecondary)
+
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Button(
+                            onClick = { startChallenge(navController) },
+                            modifier = Modifier
+                                .size(width = 200.dp, height = 60.dp)
+                                .padding(8.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
+                        ) {
+                            Text(text = "Iniciar Reto", color = MaterialTheme.colorScheme.onSecondary, fontSize = 25.sp)
+                        }
+                        Icon(
+                            imageVector = Icons.Filled.ArrowForward,
+                            contentDescription = "Iniciar Reto",
+                            modifier = Modifier.size(32.dp),
+                            tint = androidx . compose . ui . graphics . Color.Black
+                        )
                     }
-
-                    Spacer(modifier = Modifier.height(50.dp))
                 }
-
                 if (lastChallengeWord.isNotEmpty()) {
                     Text(
                         text = "Última palabra del reto: $lastChallengeWord",
@@ -192,6 +216,7 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
 
     private fun startCameraForScan() {
         val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
@@ -249,7 +274,7 @@ class MainActivity : ComponentActivity() {
     private fun processImage(bitmap: Bitmap) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                val credentials = BasicAWSCredentials("-", "-") // Add your AWS credentials
+                val credentials = BasicAWSCredentials("-", "-")
                 val rekognitionClient = AmazonRekognitionClient(credentials)
                 rekognitionClient.setRegion(Region.getRegion(Regions.US_EAST_1))
 

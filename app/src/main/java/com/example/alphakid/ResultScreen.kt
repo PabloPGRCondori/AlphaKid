@@ -151,7 +151,7 @@ fun ResultScreen(
             Button(
                 onClick = { navController.navigate("main") },
                 modifier = Modifier
-                    .weight(1f) // Ocupar la mitad del espacio disponible
+                    .weight(1f)
                     .padding(8.dp)
             ) {
                 Text(text = "Salir")
