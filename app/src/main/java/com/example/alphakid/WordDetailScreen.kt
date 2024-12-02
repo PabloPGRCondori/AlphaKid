@@ -15,18 +15,18 @@ import coil.compose.rememberImagePainter
 
 @Composable
 fun WordDetailScreen(palabra: Palabra, navController: NavHostController, onTakePhoto: () -> Unit) {
-    var timerText by remember { mutableStateOf("Form the word in 5 seconds") }
+    var timerText by remember { mutableStateOf("Forma la palabra en 5 segundos") }
     var isProcessing by remember { mutableStateOf(false) }
     var timerFinished by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         object : CountDownTimer(5000, 1000) {
             override fun onTick(millisUntilFinished: Long) {
-                timerText = "Form the word in ${millisUntilFinished / 1000} seconds"
+                timerText = "Forma la palabra en  ${millisUntilFinished / 1000} segundos"
             }
 
             override fun onFinish() {
-                timerText = "Time's up! Taking a photo to scan the word."
+                timerText = "Se acabo el tiempo! Tomando una foto para scanear el texto."
                 timerFinished = true
                 onTakePhoto()
             }

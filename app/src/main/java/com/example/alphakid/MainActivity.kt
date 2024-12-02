@@ -175,7 +175,7 @@ class MainActivity : ComponentActivity() {
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
-                    println("Error fetching words: ${e.message}")
+                    println("Error al buscar la palabra: ${e.message}")
                 }
             }
         }
@@ -189,7 +189,7 @@ class MainActivity : ComponentActivity() {
                 startCameraForScan()
             } else {
                 // Permission denied, handle accordingly
-                println("Camera permission denied")
+                println("Acceso a la camara denegado")
             }
         }
     }
@@ -202,7 +202,7 @@ class MainActivity : ComponentActivity() {
                 isProcessing = true
                 processImage(imageBitmap)
             } else {
-                println("Error: Image capture failed")
+                println("Lo lamentamos, no pudimos capturar la imagen.")
             }
         }
     }
@@ -210,7 +210,7 @@ class MainActivity : ComponentActivity() {
     private fun processImage(bitmap: Bitmap) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                val credentials = BasicAWSCredentials("-", "-") // Add your AWS credentials
+                val credentials = BasicAWSCredentials("-","-")
                 val rekognitionClient = AmazonRekognitionClient(credentials)
                 rekognitionClient.setRegion(Region.getRegion(Regions.US_EAST_1))
 
@@ -222,14 +222,14 @@ class MainActivity : ComponentActivity() {
                 val request = DetectTextRequest().withImage(image)
                 val result: DetectTextResult = rekognitionClient.detectText(request)
 
-                val detectedText = result.textDetections.firstOrNull()?.detectedText ?: "No text detected"
+                val detectedText = result.textDetections.firstOrNull()?.detectedText ?: "No se detecto el texto"
                 withContext(Dispatchers.Main) {
                     this@MainActivity.detectedText = detectedText
                     isProcessing = false
-                    navController.navigate("result") // Ensure navigation to result screen
+                    navController.navigate("resultado") // Ensure navigation to result screen
                 }
             } catch (e: Exception) {
-                println("Error processing image: ${e.message}")
+                println("Error al procesar la imagen: ${e.message}")
                 isProcessing = false
             }
         }
