@@ -42,6 +42,7 @@ import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
 import kotlin.random.Random
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.ui.unit.sp
 
 class MainActivity : ComponentActivity() {
 
@@ -127,27 +128,50 @@ class MainActivity : ComponentActivity() {
             },
             modifier = Modifier.fillMaxSize()
         ) { innerPadding ->
-            Column(
+            Box(
                 modifier = Modifier
                     .padding(innerPadding)
-                    .fillMaxSize(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+                    .fillMaxSize()
             ) {
-                Button(
-                    onClick = { startCameraForScan() },
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-                ) {
-                    Text(text = "Escanear Texto", color = MaterialTheme.colorScheme.onPrimary)
+                Image(
+                    painter = painterResource(id = R.drawable.startinit),
+                    contentDescription = "Imagen de fondo",
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .size(400.dp)
+                )
+                Text(
+                    text = "Elige!!!",
+                    color = Color.Black,
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(top = 240.dp),
+                    fontSize = 40.sp
+                    )
+                Row(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter) // Coloca el Row en la parte inferior central
+                        .padding(bottom = 240.dp), // Padding inferior
+                    horizontalArrangement = Arrangement.SpaceBetween
+                )
+                {
+                    Button(
+                        onClick = { startCameraForScan() },
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                    ) {
+                        Text(text = "Escanear Texto", color = MaterialTheme.colorScheme.onPrimary)
+                    }
+                    Spacer(modifier = Modifier.width(50.dp))
+                    Button(
+                        onClick = { startChallenge(navController) },
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
+                    ) {
+                        Text(text = "Iniciar Reto", color = MaterialTheme.colorScheme.onSecondary)
+                    }
+
+                    Spacer(modifier = Modifier.height(50.dp))
                 }
-                Spacer(modifier = Modifier.height(16.dp))
-                Button(
-                    onClick = { startChallenge(navController) },
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
-                ) {
-                    Text(text = "Iniciar Reto", color = MaterialTheme.colorScheme.onSecondary)
-                }
-                Spacer(modifier = Modifier.height(16.dp))
+
                 if (lastChallengeWord.isNotEmpty()) {
                     Text(
                         text = "Última palabra del reto: $lastChallengeWord",
@@ -155,6 +179,16 @@ class MainActivity : ComponentActivity() {
                         color = MaterialTheme.colorScheme.onBackground
                     )
                 }
+            }
+
+            Column(
+                modifier = Modifier
+                    .padding(innerPadding)
+                    .fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Bottom
+            ) {
+
             }
         }
     }
@@ -231,7 +265,7 @@ class MainActivity : ComponentActivity() {
                 withContext(Dispatchers.Main) {
                     this@MainActivity.detectedText = detectedText
                     isProcessing = false
-                    navController.navigate("resultado") // Ensure navigation to result screen
+                    navController.navigate("result") // Ensure navigation to result screen
                 }
             } catch (e: Exception) {
                 println("Error al procesar la imagen: ${e.message}")
