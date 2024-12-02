@@ -17,6 +17,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.airbnb.lottie.compose.LottieAnimation
@@ -70,7 +71,9 @@ fun SplashScreen() {
             Spacer(modifier = Modifier.height(16.dp))
             Text(
                 text = "¡Bienvenido a AlphaKid!",
+                color = Color.Black,
                 style = MaterialTheme.typography.headlineMedium
+
             )
             Spacer(modifier = Modifier.height(16.dp))
 

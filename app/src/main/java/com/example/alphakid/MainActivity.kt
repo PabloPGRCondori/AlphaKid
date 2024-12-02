@@ -210,7 +210,7 @@ class MainActivity : ComponentActivity() {
     private fun processImage(bitmap: Bitmap) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                val credentials = BasicAWSCredentials("-","-")
+                val credentials = BasicAWSCredentials("-", "-") 
                 val rekognitionClient = AmazonRekognitionClient(credentials)
                 rekognitionClient.setRegion(Region.getRegion(Regions.US_EAST_1))
 
